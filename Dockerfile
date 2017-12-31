@@ -26,7 +26,7 @@ RUN mkdir -p "${CERTBOT_CHALLENGE_DIRECTORY}"
 ENV NGINX_CONFIG_DIRECTORY /etc/nginx/conf.d/attached
 ENV NGINX_CONFIG_FILENAME index.conf
 RUN touch "${NGINX_CONFIG_DIRECTORY}/${NGINX_CONFIG_FILENAME}"
-VOLUME [ "/etc/letsencrypt", "${NGINX_CONFIG_DIRECTORY}" ]
+VOLUME [ "/etc/letsencrypt", "${NGINX_CONFIG_DIRECTORY}", "/var/log" ]
 COPY scripts "${STARTUP_SCRIPTS_DIRECTORY}"
 # FIXME: ENTRYPOINT [ "/scripts/start" ] is needed instead of ENTRYPOINT [
 # "${STARTUP_SCRIPTS_DIRECTORY}/start" ], becuase without shell, ENV expansion

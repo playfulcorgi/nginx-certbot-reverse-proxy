@@ -59,7 +59,7 @@ else:
     else:
         useTestCerts = True
     print('Running NGINX in the background for initial Certbot challenge.')
-    printSubprocessStdout(check_output(relative('server/backgroundServerStart')))
+    printSubprocessStdout(check_output([relative('server/backgroundServerStart'), '--no-certs-yet']))
     run(
         email=email, 
         challengeDirectory=challengeDirectory, 

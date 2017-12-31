@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
-from subprocess import Popen, PIPE, STDOUT
+import sys, os
+from subprocess import Popen, PIPE, STDOUT, check_output
 from regenConf import regen as regenNginxConfiguration
+sys.path.insert(1, os.path.join(sys.path[0], '..')) # Allow parent directory's Python files to be imported.
+from printSubprocessStdout import printSubprocessStdout
 
 regenNginxConfiguration()
+print(check_output(['nginx', '-t']))
 Popen(['/usr/sbin/nginx'], stdout=PIPE, stderr=STDOUT)

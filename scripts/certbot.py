@@ -22,7 +22,7 @@ def run(email, challengeDirectory, domains, test = True, reloadNginx = True, col
     for domain in domains:
         certbotCommand.append('-d')
         certbotCommand.append(domain)
-    if not test:
+    if test:
         print('CERTBOT_STAGING is not False. Certbot will download and use test certificates instead of real ones for specified domains. To have Certbot download actual certificates for domains provided, set test=False.')
         certbotCommand.append('--test-cert')
     print('Running Certbot with provided configuration and using NGINX to serve the ACME challenge.')
