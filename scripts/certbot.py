@@ -1,7 +1,6 @@
 import os
 from livePrintStdout import livePrintStdout
 from subprocess import Popen, PIPE, STDOUT
-from regenConf import regen
 
 def relative(subpath):
     return os.path.join(os.path.dirname(__file__), subpath)
