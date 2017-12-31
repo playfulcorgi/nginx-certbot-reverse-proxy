@@ -1,64 +1,24 @@
 #!/usr/bin/env python3
-import tempfile, os, glob, datetime
+import os
+from certCheck import CertCheck
 from certbot import run
 from loadEnv import load as loadEnvVariables
-from pathlib import Path
 from printSubprocessStdout import printSubprocessStdout
 from subprocess import check_output
 
 def relative(subpath):
     return os.path.join(os.path.dirname(__file__), subpath)
 
-def niceTime(unixTime):
-	return datetime.datetime.fromtimestamp(unixTime).strftime('%d-%m-%Y %H:%M:%S')
-
-def getNewestCertFileDate():
-	certFiles = glob.glob('/etc/letsencrypt/**/*', recursive=True)
-	newestModifiedDate = -1
-	for certFilePath in certFiles:
-		fileTime = os.path.getmtime(certFilePath)
-		if fileTime > newestModifiedDate:
-			newestModifiedDate = fileTime
-	return newestModifiedDate
-
 print('Cert check cron job started.')
 loadEnvVariables()
 print('Loaded environment variables.')
 
-timestampFilePath = os.path.join(
-	tempfile.gettempdir(), 
-	'cron-cert-check-timestamp-file'
-)
-shouldUpdate = False
-try:
-	print('Checking timestamp file date which indicates last time certificates were updated. Will compare it with certificate files\' dates to decide whether new certificates are available.')
-	timestampFileTime = os.path.getmtime(timestampFilePath)
-	print('Current file timestamp is {}. Checking modified date of certificate files.'
-		.format(niceTime(timestampFileTime)))
-	newestModifiedDate = getNewestCertFileDate()
-	if newestModifiedDate > timestampFileTime:
-		shouldUpdate = True
-except FileNotFoundError:
-	print('Timestamp file doesn\'t exist.')
-	newestModifiedDate = getNewestCertFileDate()
-	shouldUpdate = True
-	timestampFileTime = None
-
-print('Newest file in certificates folder has time {}'.format(niceTime(newestModifiedDate)))
-
-if shouldUpdate:
+certCheck = CertCheck()
+if certCheck.shouldServerUpdate():
 	print('Saved timestamp is older than at least one of certificate files or there is no saved timestamp yet. Using newest certificate files by reloading the server.')
 	printSubprocessStdout(message=check_output(relative('server/reloadServer')), colors=False)
 	print('Server reload requested.')
-	if timestampFileTime == None:
-		tempTimestampFilePath = timestampFilePath + '.temp'
-		Path(tempTimestampFilePath).touch()
-		os.utime(tempTimestampFilePath, (newestModifiedDate, newestModifiedDate))
-		os.rename(tempTimestampFilePath, timestampFilePath)
-		print('There was no saved timestamp. Created a new one and set it to newest certificate file date.')
-	else:
-		os.utime(timestampFilePath, (newestModifiedDate, newestModifiedDate))
-		print('Saved timestamp updated to newest certificate file date.')
+	certCheck.updateTimestamp()
 else:
 	print('No action required.')
 print('Cert check cron job finished.')

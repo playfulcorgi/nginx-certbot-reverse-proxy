@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from subprocess import Popen, PIPE, STDOUT
 from regenConf import regen as regenNginxConfiguration
 
 regenNginxConfiguration()

@@ -8,6 +8,7 @@ from livePrintStdout import livePrintStdout
 from certbot import run
 from generateEnvFile import generate as generateEnvFile
 from printSubprocessStdout import printSubprocessStdout
+from certCheck import CertCheck
 
 def relative(subpath):
     return os.path.join(os.path.dirname(__file__), subpath)
@@ -22,7 +23,11 @@ useCertbot = os.environ.get('CERTBOT_ENABLED')
 print('Saving env variables in file to be loaded by cron jobs.')
 generateEnvFile()
 if not useCertbot == 'true':
-    print('CERTBOT_ENABLED is not set to "true". Certbot will not auto renew SSL certificates for provided domains while this container is running. Change CERTBOT_ENABLED to "true" to have Certbot periodically check the age of the certificate and update it automatically. However, NGINX will be launched and new certificates placed inside {} will cause the server to be automatically reloaded to ensure they are used.'.format('/etc/letsencrypt'))
+    print('CERTBOT_ENABLED is not set to "true". Certbot will not auto renew SSL certificates for provided domains while this container is running. Change CERTBOT_ENABLED to "true" to have Certbot periodically check the age of the certificate and update it automatically. However, NGINX will be launched and new certificates placed inside {} will cause the server to be automatically reloaded (may happen after a delay) to ensure they are used.'.format('/etc/letsencrypt'))
+    print('Updating timestamp tracking the age of certificates.')
+    certCheck = CertCheck()
+    certCheck.updateTimestamp()
+    print('Adding cron job checking if there are new certificates.')
     addCron(
         '{} {} 2>&1 | logger -t cron-cert-check'
         .format(
@@ -73,6 +78,7 @@ else:
         )
     )
     print('Cron job for renewing certificates added.')
+
 print('Starting NGINX in the foreground.')
 foregroundNginxProcess = Popen(relative('server/foregroundServerStart'), stdout=PIPE, stderr=STDOUT)
 print('NGINX started. Watching for signals to shutdown gracefully.')
