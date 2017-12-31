@@ -1,0 +1,42 @@
+#!/usr/bin/env python3
+import os
+from certbot import run
+from loadEnv import load as loadEnvVariables
+
+print('Renew cron job started.')
+loadEnvVariables()
+print('Loaded environment variables.')
+
+email = os.environ.get('CERTBOT_EMAIL')
+if not email:
+	print('CERTBOT_EMAIL is required when using Certbot for SSL but was not provided.')
+	exit(1)
+
+domains = os.environ.get('CERTBOT_DOMAINS')
+if not domains:
+	print('CERTBOT_DOMAINS is required when using Certbot for SSL but was not provided.')
+	exit(1)
+
+domainsArray = domains.split(' ')
+
+for domain in domainsArray:
+	if not domain:
+		print('CERTBOT_DOMAINS provided but no domain strings found.')
+		exit(1)
+
+print('Found domains for Certbot: {0}.'.format(domainsArray))
+challengeDirectory = os.environ['CERTBOT_CHALLENGE_DIRECTORY']
+
+if os.environ.get('CERTBOT_STAGING') == 'false':
+	useTestCerts = False
+else: 
+	useTestCerts = True
+
+run(
+	email=email, 
+	challengeDirectory=challengeDirectory, 
+	domains=domainsArray, 
+	test=useTestCerts,
+	colors=False
+)
+print('Renew cron job finished.')

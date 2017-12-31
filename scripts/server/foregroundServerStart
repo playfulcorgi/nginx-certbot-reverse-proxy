@@ -1,0 +1,8 @@
+#!/usr/bin/env python3
+from regenConf import regen as regenNginxConfiguration
+from subprocess import PIPE, Popen, STDOUT
+from livePrintStdout import livePrintStdout
+
+regenNginxConfiguration()
+foregroundNginxProcess = Popen(['/usr/sbin/nginx', '-g', 'daemon off;'], stdout=PIPE, stderr=STDOUT)
+livePrintStdout(foregroundNginxProcess)

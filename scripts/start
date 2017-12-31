@@ -1,0 +1,79 @@
+#!/usr/bin/env python3
+import os
+import signal
+from subprocess import check_output, PIPE, Popen, STDOUT
+from addCrontab import add as addCron
+from shlex import quote
+from livePrintStdout import livePrintStdout
+from certbot import run
+from generateEnvFile import generate as generateEnvFile
+from printSubprocessStdout import printSubprocessStdout
+
+def relative(subpath):
+    return os.path.join(os.path.dirname(__file__), subpath)
+
+def onSignal(signum, stack):
+    print('Received signal {}.'.format(signal.Signals(signum).name))
+    foregroundNginxProcess.terminate()
+
+print('Remember to mount /etc/letsencrypt as a volume on the host. It will receive downloaded certificates from Let\'s Encrypt. {0} is the mount point for NGINX configuration. {1} inside of the directory is the file included by NGINX in its configuration, to be replaced by custom NGINX settings, specific to the image instance ran. The whole {0} directory can be used to store custom configuration as long as {1} is provided inside. Configuring Certbot.'.format(
+    os.environ['NGINX_CONFIG_DIRECTORY'], os.environ['NGINX_CONFIG_FILENAME']))
+useCertbot = os.environ.get('CERTBOT_ENABLED')
+print('Saving env variables in file to be loaded by cron jobs.')
+generateEnvFile()
+if not useCertbot == 'true':
+    print('CERTBOT_ENABLED is not set to "true". Certbot will not auto renew SSL certificates for provided domains while this container is running. Change CERTBOT_ENABLED to "true" to have Certbot periodically check the age of the certificate and update it automatically. However, NGINX will be launched and new certificates placed inside {} will cause the server to be automatically reloaded to ensure they are used.'.format('/etc/letsencrypt'))
+    addCron(
+        '0 0,12 * * * {} 2>&1 | logger -t cron-cert-check'
+        .format(
+            quote(relative('startCronCertCheck'))
+        )
+    )
+else:
+    email = os.environ.get('CERTBOT_EMAIL')
+    if not email:
+        print('CERTBOT_EMAIL is required when using Certbot for SSL.')
+        exit(1)
+    domains = os.environ.get('CERTBOT_DOMAINS')
+    if not domains:
+        print('CERTBOT_DOMAINS is required when using Certbot for SSL.')
+        exit(1)
+    
+    domainsArray = domains.split(' ')
+
+    for domain in domainsArray:
+        if not domain:
+            print('CERTBOT_DOMAINS provided but no domain strings found.')
+            exit(1)
+
+    print('Found domains for Certbot: {0}.'.format(domainsArray))
+    challengeDirectory = os.environ['CERTBOT_CHALLENGE_DIRECTORY']
+    if os.environ.get('CERTBOT_STAGING') == 'false':
+        useTestCerts = False
+    else:
+        useTestCerts = True
+    print('Running NGINX in the background for initial Certbot challenge.')
+    printSubprocessStdout(check_output(relative('server/backgroundServerStart')))
+    run(
+        email=email, 
+        challengeDirectory=challengeDirectory, 
+        domains=domainsArray, 
+        test=useTestCerts, 
+        reloadNginx=False
+    )
+    print('Stopping NGINX that was used for ACME challenge.')
+    livePrintStdout(Popen(['/usr/sbin/nginx', '-s', 'stop'], stdout=PIPE, stderr=STDOUT))
+    print('NGINX stopped. Making Certbot check and auto renew certificate periodically and reload NGINX configuration after every certificate renewal.')
+    addCron(
+        '0 0,12 * * * {} 2>&1 | logger -t cron-renew'
+        .format(
+            quote(relative('startCronRenew'))
+        )
+    )
+    print('Cron job for renewing certificates added.')
+print('Starting NGINX in the foreground.')
+foregroundNginxProcess = Popen(relative('server/foregroundServerStart'), stdout=PIPE, stderr=STDOUT)
+print('NGINX started. Watching for signals to shutdown gracefully.')
+signal.signal(signal.SIGTERM, onSignal)
+signal.signal(signal.SIGINT, onSignal)
+livePrintStdout(foregroundNginxProcess)

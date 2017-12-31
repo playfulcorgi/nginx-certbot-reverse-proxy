@@ -1,0 +1,5 @@
+#!/usr/bin/env python3
+from regenConf import regen as regenNginxConfiguration
+
+regenNginxConfiguration()
+Popen(['/usr/sbin/nginx'], stdout=PIPE, stderr=STDOUT)
