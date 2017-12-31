@@ -24,9 +24,10 @@ generateEnvFile()
 if not useCertbot == 'true':
     print('CERTBOT_ENABLED is not set to "true". Certbot will not auto renew SSL certificates for provided domains while this container is running. Change CERTBOT_ENABLED to "true" to have Certbot periodically check the age of the certificate and update it automatically. However, NGINX will be launched and new certificates placed inside {} will cause the server to be automatically reloaded to ensure they are used.'.format('/etc/letsencrypt'))
     addCron(
-        '0 0,12 * * * {} 2>&1 | logger -t cron-cert-check'
+        '{} {} 2>&1 | logger -t cron-cert-check'
         .format(
-            quote(relative('startCronCertCheck'))
+            os.environ['CERTIFICATES_CHECK_FREQUENCY'],
+            quote(relative('startCronEnsureNewestCert'))
         )
     )
 else:
@@ -65,8 +66,9 @@ else:
     livePrintStdout(Popen(['/usr/sbin/nginx', '-s', 'stop'], stdout=PIPE, stderr=STDOUT))
     print('NGINX stopped. Making Certbot check and auto renew certificate periodically and reload NGINX configuration after every certificate renewal.')
     addCron(
-        '0 0,12 * * * {} 2>&1 | logger -t cron-renew'
+        '{} {} 2>&1 | logger -t cron-renew'
         .format(
+            os.environ['CERTIFICATES_CHECK_FREQUENCY'],
             quote(relative('startCronRenew'))
         )
     )

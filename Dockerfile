@@ -18,6 +18,7 @@ ENV CERTBOT_ENABLED "false"
 ENV CERTBOT_DOMAINS ""
 ENV CERTBOT_EMAIL ""
 ENV CERTBOT_STAGING "true"
+ENV CERTIFICATES_CHECK_FREQUENCY "0 0,12 * * *"
 RUN rm /etc/nginx/conf.d/* /etc/nginx/nginx.conf
 COPY nginx /etc/nginx
 ENV STARTUP_SCRIPTS_DIRECTORY /scripts
