@@ -1,9 +1,10 @@
-import os
 from livePrintStdout import livePrintStdout
 from subprocess import Popen, PIPE, STDOUT
 
-def relative(subpath):
-    return os.path.join(os.path.dirname(__file__), subpath)
+def relative(subpath='', useCwd=False):
+	import os
+	basePath = os.getcwd() if useCwd else os.path.dirname(os.path.abspath(__file__))
+	return os.path.normpath(os.path.join(basePath, os.path.expanduser(subpath)))
 
 def run(email, challengeDirectory, domains, test = True, reloadNginx = True, colors = True):
     certbotCommand = [
