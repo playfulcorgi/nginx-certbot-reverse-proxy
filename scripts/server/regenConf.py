@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import os, re, glob, sys, argparse
 from string import Template
 
