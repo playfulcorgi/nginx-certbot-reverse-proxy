@@ -2,3 +2,5 @@
 *.pyc
 /docker-run-aws
 /docker-run-local
+/.vscode
+.DS_Store
