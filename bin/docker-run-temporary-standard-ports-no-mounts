@@ -1,0 +1,8 @@
+#!/bin/bash
+docker run \
+	--rm \
+	-ti \
+	--env-file .env \
+	-p 80:80 \
+	-p 443:443 \
+	playfulcorgi/reverse-proxy

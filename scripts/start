@@ -9,6 +9,7 @@ from certbot import run
 from generateEnvFile import generate as generateEnvFile
 from printSubprocessStdout import printSubprocessStdout
 from certCheck import CertCheck
+from fillEmptyDirectory import fillEmpty
 
 def relative(subpath='', useCwd=False):
 	import os
@@ -19,8 +20,20 @@ def onSignal(signum, stack):
     print('Received signal {}.'.format(signal.Signals(signum).name))
     foregroundNginxProcess.terminate()
 
-print('Remember to mount /etc/letsencrypt as a volume on the host. It will receive downloaded certificates from Let\'s Encrypt. {0} is the mount point for NGINX configuration. {1} inside of the directory is the file included by NGINX in its configuration, to be replaced by custom NGINX settings, specific to the image instance ran. The whole {0} directory can be used to store custom configuration as long as {1} is provided inside. Configuring Certbot.'.format(
-    os.environ['NGINX_CONFIG_DIRECTORY'], os.environ['NGINX_CONFIG_FILENAME']))
+print('Remember to mount /etc/letsencrypt as a volume on the host. It will receive downloaded certificates from Let\'s Encrypt. {0} is the mount point for NGINX configuration. {1} inside of the directory is the file included by NGINX in its configuration, to be replaced by custom NGINX settings, specific to the image instance ran. The whole {0} directory can be used to store custom configuration as long as {1} is provided inside. Configuring Certbot. /var/log directory will contain logs from certbot renewal script executed using a cron job and it can be mounted on the host also. If any of the mount directories mentioned are mounted on the host and empty at startup, they will be filled with default files and directories. Keep in mind that configuring Docker in more extreme ways may require the default contents of these directories to be adjusted.'.format(
+    os.environ['NGINX_CONFIG_DIRECTORY'], 
+    os.environ['NGINX_CONFIG_FILENAME']
+))
+for mountPath in ['/etc/letsencrypt', os.environ['NGINX_CONFIG_DIRECTORY'], '/var/log']:
+    print('Filling {} with default contents if empty.'.format(mountPath))
+    defaultFilesUsed = fillEmpty(
+        mountPath, 
+        os.path.join('/blueprints/', os.path.basename(os.path.normpath(mountPath)))
+    )
+    if defaultFilesUsed:
+        print('{} was empty and therefore filled with default contents.'.format(mountPath))
+    else:
+        print('{} was not empty. Its contents will be used instead of default contents.'.format(mountPath))
 useCertbot = os.environ.get('CERTBOT_ENABLED')
 print('Saving env variables in file to be loaded by cron jobs.')
 generateEnvFile()

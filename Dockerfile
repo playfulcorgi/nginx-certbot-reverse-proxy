@@ -28,6 +28,17 @@ ENV NGINX_CONFIG_FILENAME index.conf
 RUN touch "${NGINX_CONFIG_DIRECTORY}/${NGINX_CONFIG_FILENAME}"
 VOLUME [ "/etc/letsencrypt", "${NGINX_CONFIG_DIRECTORY}", "/var/log" ]
 COPY scripts "${STARTUP_SCRIPTS_DIRECTORY}"
+RUN mkdir /blueprints
+# Copying default directories' contents to a "blueprint" directory. If any of
+# the directories will be empty on Docker container start (new container is
+# instantiated and started for the first time) and they were mounted to a host
+# filesystem or to a named filesystem (in theses cases Docker won't place the
+# contents of these directories inside the mounted volumes), populate the
+# mounted directories with blueprint contents. This is a workaround to make
+# using this Docker image as easy as possible. This image requires some files to
+# work that will most likely change but it's useful to have default versions of
+# those files provided if no customized ones were yet created.
+RUN cp -a /etc/letsencrypt "${NGINX_CONFIG_DIRECTORY}" /var/log /blueprints/
 # FIXME: ENTRYPOINT [ "/scripts/start" ] is needed instead of ENTRYPOINT [
 # "${STARTUP_SCRIPTS_DIRECTORY}/start" ], becuase without shell, ENV expansion
 # doesn't work. But no shell is required to receive system signals, such as

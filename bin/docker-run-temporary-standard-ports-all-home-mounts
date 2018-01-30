@@ -1,0 +1,11 @@
+#!/bin/bash
+docker run \
+	--rm \
+	-ti \
+	-v ~/nginx-reverse-proxy-current-configuration/letsencrypt:/etc/letsencrypt \
+	-v ~/nginx-reverse-proxy-current-configuration/attached:/etc/nginx/conf.d/attached \
+	-v ~/nginx-reverse-proxy-current-configuration/logs:/var/log \
+	--env-file .env \
+	-p 80:80 \
+	-p 443:443 \
+	playfulcorgi/reverse-proxy
