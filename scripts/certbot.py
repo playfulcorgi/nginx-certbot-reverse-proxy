@@ -12,6 +12,7 @@ def run(email, challengeDirectory, domains, test = True, reloadNginx = True, col
         '-n', # --non-interactive
         '--agree-tos',
         '--renew-with-new-domains',
+        '--expand',
         '--keep-until-expiring',
         '-m', email,
         '--webroot',
