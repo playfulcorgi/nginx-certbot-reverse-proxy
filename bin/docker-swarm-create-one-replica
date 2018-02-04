@@ -1,0 +1,11 @@
+#!/bin/bash
+docker service create \
+    --mount type=bind,source="/home/ubuntu/nginx-reverse-proxy-current-configuration/letsencrypt",destination="/etc/letsencrypt" \
+    --mount type=bind,source="/home/ubuntu/nginx-reverse-proxy-current-configuration/attached",destination="/etc/nginx/conf.d/attached" \
+    --mount type=bind,source="/home/ubuntu/nginx-reverse-proxy-current-configuration/logs",destination="/var/log" \
+    -p 80:80 \
+    -p 443:443 \
+	--env-file .env \
+    --detach=false \
+    --name nginx-reverse-proxy \
+    playfulcorgi/nginx-certbot-reverse-proxy
