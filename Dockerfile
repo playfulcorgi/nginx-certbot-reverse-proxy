@@ -44,4 +44,5 @@ RUN cp -a /etc/letsencrypt "${NGINX_CONFIG_DIRECTORY}" /var/log /blueprints/
 # doesn't work. But no shell is required to receive system signals, such as
 # SIGTERM and SIGINT, inside of the ENTRYPOINT script, so no ENV expansion is a
 # compromise.
+# FIXME: Consider using dump-init to allow graceful shutdown. https://engineeringblog.yelp.com/2016/01/dumb-init-an-init-for-docker.html
 ENTRYPOINT [ "/scripts/start" ]
