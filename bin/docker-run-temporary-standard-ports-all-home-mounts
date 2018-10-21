@@ -8,4 +8,4 @@ docker run \
 	--env-file .env \
 	-p 80:80 \
 	-p 443:443 \
-	playfulcorgi/reverse-proxy
+	playfulcorgi/nginx-certbot-reverse-proxy

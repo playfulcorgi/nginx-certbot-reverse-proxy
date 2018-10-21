@@ -1,2 +1,2 @@
 #!/bin/bash
-docker build -t playfulcorgi/reverse-proxy .
+docker build -t playfulcorgi/nginx-certbot-reverse-proxy .
